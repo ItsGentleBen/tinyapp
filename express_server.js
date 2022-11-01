@@ -3,7 +3,7 @@ const app = express();
 const PORT = 8080;
 
 app.set("view engine", "ejs");
-
+app.use(express.urlencoded({extended: true}));
 
 //Function to generate a random 6 character string for URL
 function generateRandomString() {
@@ -22,8 +22,16 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
-//Allows use of a body parser middle-ware, I think?
-app.use(express.urlencoded({extended: true}));
+
+//Prints comfirmation in the terminal that the server is up and listening
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
+
+
+//
+//Create
+//
 
 //Generates a random string when a url is submitted in /urls/new, saves it to the database
 //then redirects to the page displaying that specific pair of short/long URL
@@ -33,30 +41,25 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+//
+//Read
+//
+
 //Current homepage. To be fixed I assume
 app.get("/", (req, res) => {
   res.send('Hello!');
 });
 
-//Prints comfirmation in the terminal that the server is up and listening
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
-
-
-
-
 //Page that lists all URLs and their shortened forms
 app.get("/urls", (req, res) => {
-const templateVars = { urls: urlDatabase };
-res.render("urls_index", templateVars);
-});
+  const templateVars = { urls: urlDatabase };
+  res.render("urls_index", templateVars);
+  });
 
-//Page to add new URLs to "database"
+  //Page to add new URLs to "database"
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
-
 
 //Page that shows a specific URL and its shortened form
 app.get("/urls/:id", (req, res) => {
@@ -70,3 +73,28 @@ app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[id];
   res.redirect(longURL);
 });
+
+//
+//Update
+//
+
+//
+//Delete
+//
+
+//Deletes the selected entry from the database
+app.post('/urls/:id/delete', (req, res) => {
+  delete urlDatabase[req.params.id];
+  res.redirect('/urls');
+});
+
+
+
+
+
+
+
+
+
+
+
