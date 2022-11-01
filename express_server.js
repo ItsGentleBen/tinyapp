@@ -28,7 +28,6 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-
 //
 //Create
 //
@@ -78,6 +77,12 @@ app.get("/u/:id", (req, res) => {
 //Update
 //
 
+//Edits the longURL in the database
+app.post('/urls/:id', (req, res) => {
+urlDatabase[req.params.id] = req.body["longURL"]
+  res.redirect('/urls');
+});
+
 //
 //Delete
 //
@@ -87,14 +92,3 @@ app.post('/urls/:id/delete', (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect('/urls');
 });
-
-
-
-
-
-
-
-
-
-
-
