@@ -4,6 +4,18 @@ const PORT = 8080;
 
 app.set("view engine", "ejs");
 
+
+//Function to generate a random string for URL
+function generateRandomString() {
+  let randomString = "";
+  const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+  for (let i = 0; i < 6; i++) {
+    randomString += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return randomString
+}
+
 //Placeholder Database
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -48,4 +60,5 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
 });
+
 
