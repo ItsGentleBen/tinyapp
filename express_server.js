@@ -25,13 +25,15 @@ const urlDatabase = {
 //Allows use of a body parser middle-ware, I think?
 app.use(express.urlencoded({extended: true}));
 
+//Generates a random string when a url is submitted in /urls/new, saves it to the database
+//then redirects to the page displaying that specific pair of short/long URL
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
 });
 
-
+//Current homepage. To be fixed I assume
 app.get("/", (req, res) => {
   res.send('Hello!');
 });
@@ -42,9 +44,7 @@ app.listen(PORT, () => {
 });
 
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
+
 
 //Page that lists all URLs and their shortened forms
 app.get("/urls", (req, res) => {
@@ -57,10 +57,16 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+
 //Page that shows a specific URL and its shortened form
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
 });
 
-
+//Redirects from shortened URL to longURL
+app.get("/u/:id", (req, res) => {
+  id = req.params.id;
+  const longURL = urlDatabase[id];
+  res.redirect(longURL);
+});
