@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/ItsGentleBen/tinyapp/issues"
   },
-  "homepage": "https://github.com/ItsGentleBen/tinyapp#readme"
+  "homepage": "https://github.com/ItsGentleBen/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
