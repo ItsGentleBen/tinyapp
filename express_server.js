@@ -5,7 +5,7 @@ const PORT = 8080;
 app.set("view engine", "ejs");
 
 
-//Function to generate a random string for URL
+//Function to generate a random 6 character string for URL
 function generateRandomString() {
   let randomString = "";
   const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -26,9 +26,11 @@ const urlDatabase = {
 app.use(express.urlencoded({extended: true}));
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("Ok")
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect(`/urls/${shortURL}`);
 });
+
 
 app.get("/", (req, res) => {
   res.send('Hello!');
