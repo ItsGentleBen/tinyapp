@@ -10,6 +10,14 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
+//Allows use of a body parser middle-ware, I think?
+app.use(express.urlencoded({extended: true}));
+
+app.post("/urls", (req, res) => {
+  console.log(req.body);
+  res.send("Ok")
+});
+
 app.get("/", (req, res) => {
   res.send('Hello!');
 });
