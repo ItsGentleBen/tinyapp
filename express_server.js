@@ -1,5 +1,6 @@
 const express = require("express");
 const cookieParser = require('cookie-parser')
+const morgan = require('morgan')
 const app = express();
 const PORT = 8080;
 
@@ -10,6 +11,7 @@ app.set("view engine", "ejs");
 //
 app.use(express.urlencoded({extended: true}));
 app.use(cookieParser())
+app.use(morgan('dev'));
 
 //Function to generate a random 6 character string for URL
 function generateRandomString() {
@@ -22,10 +24,23 @@ function generateRandomString() {
   return randomString
 }
 
-//Placeholder Database
+//Placeholder Databases
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
+};
+
+const user = {
+  userRandomID: {
+    id: "alesha",
+    email: "a@b.ca",
+    password: "123",
+  },
+  user2RandomID: {
+    id: "chip",
+    email: "1@2.ca",
+    password: "abc",
+  },
 };
 
 
@@ -46,17 +61,32 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+
+//logs in user when submitted 
 app.post('/login', (req, res) => {
   const username = req.body.username
   res.cookie('username', username)
   res.redirect('/urls');
   });
 
+//Logs out current user
 app.post('/logout', (req, res) => {
   res.clearCookie('username')
   res.redirect('/urls');
   });
 
+
+//Registers user and saves info to new object in user database
+app.post('/register', (req, res) => {
+  const randomID = generateRandomString()
+  user[randomID] = {
+    id: randomID,
+    email: req.body.email,
+    password: req.body.password
+  }
+  res.cookie('user_id', randomID)
+  res.redirect('/urls')
+});
 //
 //Read
 //
