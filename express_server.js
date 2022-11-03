@@ -158,17 +158,29 @@ app.get("/urls/new", (req, res) => {
 
 //Page that shows a specific URL and its shortened form
 app.get("/urls/:id", (req, res) => {
+  const id = req.params.id;
   const templateVars = { 
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
     user: users[req.cookies.user_id]
   };
+
+  if (!urlDatabase[id]) {
+    res.status(404);
+    return res.send('Page does not exist')
+  }
+
   return res.render("urls_show", templateVars);
 });
 
 //Redirects from shortened URL to longURL
 app.get("/u/:id", (req, res) => {
-  id = req.params.id;
+  const id = req.params.id;
+
+  if (!urlDatabase[id]) {
+    res.status(404);
+    return res.send('Page does not exist')
+  }
   const longURL = urlDatabase[id];
   return res.redirect(longURL);
 });
