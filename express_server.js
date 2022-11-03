@@ -1,6 +1,7 @@
 const express = require("express");
-const cookieParser = require('cookie-parser')
+const cookieSession = require('cookie-session')
 const morgan = require('morgan')
+const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080;
 
@@ -10,7 +11,12 @@ app.set("view engine", "ejs");
 //Middleware
 //
 app.use(express.urlencoded({extended: true}));
-app.use(cookieParser())
+app.use(cookieSession({
+  name: 'session',
+  keys: ['uwusecretkey', 'superdupertotallysecretkey', 'smartiesturtleobiwannightshade'],
+
+}))
+
 app.use(morgan('dev'));
 
 //Function to generate a random 6 character string for URL
@@ -25,7 +31,7 @@ function generateRandomString() {
 }
 
 //function to check is an email is already registered
-const getUserByEmail = (userEmail) => {
+const getUserByEmail = (userEmail, users) => {
   for (let user in users) {
     if (users[user].email === userEmail) {
       return users[user];
@@ -85,30 +91,33 @@ app.listen(PORT, () => {
 app.post('/login', (req, res) => {
   const loginEmail = req.body.email
   const loginPassword = req.body.password
-  const user = getUserByEmail(loginEmail)
-  if (!user || user.password !== loginPassword) {
+  const user = getUserByEmail(loginEmail, users)
+  const password = user.password
+  const passwordCheck = bcrypt.compareSync(loginPassword, password);
+  if (!user || !passwordCheck) {
     res.status(403);
     return res.send('Email or Password is incorrect.')
   } 
-  res.cookie('user_id', user.id)
+  req.session.user_id = user.id
   return res.redirect('/urls');
   });
 
 //Logs out current user
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id')
+  // req.session = null
+  req.session.user_id = null
   return res.redirect('/login');
   });
 
 //Page that lists all URLs and their shortened forms
 app.get("/urls", (req, res) => {
   const templateVars = { 
-    urls: urlsForUser(req.cookies.user_id),
+    urls: urlsForUser(req.session.user_id),
     users,
-    user: users[req.cookies.user_id]
+    user: users[req.session.user_id]
   };
   
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     res.status(403);
     return res.send('Please Log in to view this page')
   } 
@@ -120,10 +129,10 @@ app.get("/urls", (req, res) => {
   //Page to add new URLs to "database"
   app.get("/urls/new", (req, res) => {
     const templateVars = { 
-      user: users[req.cookies.user_id]
+      user: users[req.session.user_id]
     };
   
-    if (!req.cookies.user_id) {
+    if (!req.session.user_id) {
       return res.redirect('/login');
     } 
 
@@ -137,13 +146,13 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = { 
     id,
     users,
-    user: users[req.cookies.user_id],
+    user: users[req.session.user_id],
   };
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     res.status(401)
     return res.send('You must be logged in to view');
   } 
-  if (req.cookies.user_id !== urlDatabase[req.params.id].userID) {
+  if (req.session.user_id !== urlDatabase[req.params.id].userID) {
     res.status(403);
     return res.send('You are not allowed access to this users URL')
   }
@@ -168,10 +177,10 @@ app.get("/u/:id", (req, res) => {
 app.get("/register", (req, res) => {
   const templateVars = { 
     urls: urlDatabase,
-    user: users[req.cookies.user_id]
+    user: users[req.session.user_id]
   };
 
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.render("register", templateVars);
   }
     return res.redirect('/urls');
@@ -182,10 +191,10 @@ app.get("/register", (req, res) => {
   app.get("/login", (req, res) => {
     const templateVars = { 
       urls: urlDatabase,
-      user: users[req.cookies.user_id]
+      user: users[req.session.user_id]
     };
   
-    if (!req.cookies.user_id) {
+    if (!req.session.user_id) {
       return res.render("login", templateVars);
     }
       return res.redirect('/urls');
@@ -197,14 +206,14 @@ app.get("/register", (req, res) => {
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     res.status(401);
     return res.send('Must log in before shortening URL.')
   }
 
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
-    userID: req.cookies.user_id
+    userID: req.session.user_id
   }
   return res.redirect(`/urls/${shortURL}`);
 });
@@ -214,18 +223,20 @@ app.post('/register', (req, res) => {
   if (!req.body.email || !req.body.password){
     res.status(400);
     return res.send('One or more fields is empty. Please enter a valid email and password.')
-  } else if (getUserByEmail(req.body.email)) {
+  } else if (getUserByEmail(req.body.email, users)) {
     res.status(400);
     return res.send('An account with that email already exists.')
   }  else {
   const randomID = generateRandomString()
+  const noHashPassword = req.body.password
+  const hashedPassword = bcrypt.hashSync(noHashPassword, 10);
   const user = {
     id: randomID,
     email: req.body.email,
-    password: req.body.password
+    password: hashedPassword
   }
   users[user.id] = user
-  res.cookie('user_id', user.id)
+  req.session.user_id = user.id
   return res.redirect('/urls')
   }
 });
@@ -236,11 +247,11 @@ app.post('/urls/:id', (req, res) => {
     res.status(404)
     return res.send('ID not found');
   }
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     res.status(401)
     return res.send('You must be logged in to edit');
   } 
-  if (req.cookies.user_id !== urlDatabase[req.params.id].userID) {
+  if (req.session.user_id !== urlDatabase[req.params.id].userID) {
     res.status(403);
     return res.send('You are not allowed to edit this users URL')
   }
@@ -257,11 +268,11 @@ app.post('/urls/:id/delete', (req, res) => {
     return res.send('ID not found');
   }
   
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     res.status(401)
     return res.send('You must be logged in to delete');
   } 
-  if (req.cookies.user_id !== urlDatabase[req.params.id].userID) {
+  if (req.session.user_id !== urlDatabase[req.params.id].userID) {
     res.status(403);
     return res.send('You are not allowed access to delete this users URLS')
   }
@@ -276,7 +287,7 @@ app.post('/urls/:id/delete', (req, res) => {
 
 //Current homepage. To be fixed I assume
 app.get("/", (req, res) => {
-  res.send('Hello!');
+  return res.redirect('/register');
 });
 
 
