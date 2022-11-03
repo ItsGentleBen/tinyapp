@@ -33,11 +33,29 @@ const getUserByEmail = (userEmail) => {
   } return null;
 };
 
+//function that return the urls of currently logged in user
+const urlsForUser = (id) => {
+  let userURLs = {};
+  for (const url in urlDatabase) {
+    if (urlDatabase[url].userID === id) {
+      userURLs[url] = urlDatabase[url]
+    }
+  }
+  return userURLs
+};
+
 //Placeholder Databases
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
+
 
 const users = {
   userRandomID: {
@@ -61,20 +79,7 @@ app.listen(PORT, () => {
 //
 //Create
 //
-
-//Generates a random string when a url is submitted in /urls/new, saves it to the database
-//then redirects to the page displaying that specific pair of short/long URL
-app.post("/urls", (req, res) => {
-  
-  if (!req.cookies.user_id) {
-    res.status(401);
-    return res.send('Must log in before shortening URL.')
-  }
-  const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
-  return res.redirect(`/urls/${shortURL}`);
-});
-
+/////////////////////////////////////////////////////////////////////////////
 
 //logs in user when submitted 
 app.post('/login', (req, res) => {
@@ -95,11 +100,69 @@ app.post('/logout', (req, res) => {
   return res.redirect('/login');
   });
 
+//Page that lists all URLs and their shortened forms
+app.get("/urls", (req, res) => {
+  const templateVars = { 
+    urls: urlsForUser(req.cookies.user_id),
+    users,
+    user: users[req.cookies.user_id]
+  };
+  
+  if (!req.cookies.user_id) {
+    res.status(403);
+    return res.send('Please Log in to view this page')
+  } 
+
+  return res.render("urls_index", templateVars);
+  });
 
 
-//
-//Read
-//
+  //Page to add new URLs to "database"
+  app.get("/urls/new", (req, res) => {
+    const templateVars = { 
+      user: users[req.cookies.user_id]
+    };
+  
+    if (!req.cookies.user_id) {
+      return res.redirect('/login');
+    } 
+
+    return res.render("urls_new", templateVars);
+  });
+  
+
+//Page that shows a specific URL and its shortened form
+app.get("/urls/:id", (req, res) => {
+  const id = req.params.id
+  const templateVars = { 
+    id,
+    users,
+    user: users[req.cookies.user_id],
+  };
+  if (!req.cookies.user_id) {
+    res.status(401)
+    return res.send('You must be logged in to view');
+  } 
+  if (req.cookies.user_id !== urlDatabase[req.params.id].userID) {
+    res.status(403);
+    return res.send('You are not allowed access to this users URL')
+  }
+  templateVars['longURL'] = urlDatabase[id].longURL;
+  return res.render("urls_show", templateVars);
+});
+
+
+//Redirects from shortened URL to longURL
+app.get("/u/:id", (req, res) => {
+  const id = req.params.id;
+  if (!urlDatabase[id]) {
+    res.status(404);
+    return res.send('Page does not exist')
+  }
+  const longURL = urlDatabase[id].longURL;
+  return res.redirect(longURL);
+});
+
 
 //Directs to registration page
 app.get("/register", (req, res) => {
@@ -114,95 +177,36 @@ app.get("/register", (req, res) => {
     return res.redirect('/urls');
   });
 
+
   //Directs to login page
-app.get("/login", (req, res) => {
-  const templateVars = { 
-    urls: urlDatabase,
-    user: users[req.cookies.user_id]
-  };
+  app.get("/login", (req, res) => {
+    const templateVars = { 
+      urls: urlDatabase,
+      user: users[req.cookies.user_id]
+    };
+  
+    if (!req.cookies.user_id) {
+      return res.render("login", templateVars);
+    }
+      return res.redirect('/urls');
+    });
+  
 
+//Generates a random string when a url is submitted in /urls/new, saves it to the database
+//then redirects to the page displaying that specific pair of short/long URL
+app.post("/urls", (req, res) => {
+  const shortURL = generateRandomString();
+  
   if (!req.cookies.user_id) {
-    return res.render("login", templateVars);
-  }
-    return res.redirect('/urls');
-  });
-
-
-
-//Current homepage. To be fixed I assume
-app.get("/", (req, res) => {
-  res.send('Hello!');
-});
-
-//Page that lists all URLs and their shortened forms
-app.get("/urls", (req, res) => {
-  const templateVars = { 
-    urls: urlDatabase,
-    user: users[req.cookies.user_id]
-  };
-  return res.render("urls_index", templateVars);
-  });
-
-  //Page to add new URLs to "database"
-app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    users, 
-    user: users[req.cookies.user_id]
-  };
-
-  if (!req.cookies.user_id) {
-    return res.redirect('/login');
-  }   
-  return res.render("urls_new", templateVars);
-});
-
-//Page that shows a specific URL and its shortened form
-app.get("/urls/:id", (req, res) => {
-  const id = req.params.id;
-  const templateVars = { 
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id],
-    user: users[req.cookies.user_id]
-  };
-
-  if (!urlDatabase[id]) {
-    res.status(404);
-    return res.send('Page does not exist')
+    res.status(401);
+    return res.send('Must log in before shortening URL.')
   }
 
-  return res.render("urls_show", templateVars);
-});
-
-//Redirects from shortened URL to longURL
-app.get("/u/:id", (req, res) => {
-  const id = req.params.id;
-
-  if (!urlDatabase[id]) {
-    res.status(404);
-    return res.send('Page does not exist')
+  urlDatabase[shortURL] = {
+    longURL: req.body.longURL,
+    userID: req.cookies.user_id
   }
-  const longURL = urlDatabase[id];
-  return res.redirect(longURL);
-});
-
-//
-//Update
-//
-
-//Edits the longURL in the database
-app.post('/urls/:id', (req, res) => {
-urlDatabase[req.params.id] = req.body["longURL"]
-  return res.redirect('/urls');
-});
-
-//
-//Delete
-//
-
-//Deletes the selected entry from the database
-app.post('/urls/:id/delete', (req, res) => {
-  delete urlDatabase[req.params.id];
-  return res.redirect('/urls');
+  return res.redirect(`/urls/${shortURL}`);
 });
 
 //Registers user and saves info to new object in user database
@@ -225,3 +229,55 @@ app.post('/register', (req, res) => {
   return res.redirect('/urls')
   }
 });
+
+//Edits the longURL in the database
+app.post('/urls/:id', (req, res) => {
+  if (!urlDatabase[req.params.id]) {
+    res.status(404)
+    return res.send('ID not found');
+  }
+  if (!req.cookies.user_id) {
+    res.status(401)
+    return res.send('You must be logged in to edit');
+  } 
+  if (req.cookies.user_id !== urlDatabase[req.params.id].userID) {
+    res.status(403);
+    return res.send('You are not allowed to edit this users URL')
+  }
+
+  urlDatabase[req.params.id].longURL = req.body.longURL
+    return res.redirect('/urls');
+  });
+  
+
+//Deletes the selected entry from the database
+app.post('/urls/:id/delete', (req, res) => {
+  if (!urlDatabase[req.params.id]) {
+    res.status(404)
+    return res.send('ID not found');
+  }
+  
+  if (!req.cookies.user_id) {
+    res.status(401)
+    return res.send('You must be logged in to delete');
+  } 
+  if (req.cookies.user_id !== urlDatabase[req.params.id].userID) {
+    res.status(403);
+    return res.send('You are not allowed access to delete this users URLS')
+  }
+  delete urlDatabase[req.params.id];
+  return res.redirect('/urls');
+});
+
+
+
+
+
+
+//Current homepage. To be fixed I assume
+app.get("/", (req, res) => {
+  res.send('Hello!');
+});
+
+
+
