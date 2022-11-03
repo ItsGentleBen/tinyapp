@@ -73,15 +73,21 @@ app.post("/urls", (req, res) => {
 
 //logs in user when submitted 
 app.post('/login', (req, res) => {
-  const email = req.body.email
-  res.cookie('user_id', email)
+  const loginEmail = req.body.email
+  const loginPassword = req.body.password
+  const user = getUserByEmail(loginEmail)
+  if (!user || user.password !== loginPassword) {
+    res.status(403);
+    return res.send('Email or Password is incorrect.')
+  } 
+  res.cookie('user_id', user.id)
   return res.redirect('/urls');
   });
 
 //Logs out current user
 app.post('/logout', (req, res) => {
   res.clearCookie('user_id')
-  return res.redirect('/urls');
+  return res.redirect('/login');
   });
 
 
