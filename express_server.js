@@ -24,6 +24,15 @@ function generateRandomString() {
   return randomString
 }
 
+//function to check is an email is already registered
+const getUserByEmail = (userEmail) => {
+  for (let user in users) {
+    if (users[user].email === userEmail) {
+      return users[user];
+    }
+  } return null;
+};
+
 //Placeholder Databases
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -90,6 +99,16 @@ app.get("/register", (req, res) => {
   return res.render("register", templateVars);
   });
 
+  //Directs to login page
+app.get("/login", (req, res) => {
+  const templateVars = { 
+    urls: urlDatabase,
+    user: users[req.cookies.user_id]
+  };
+  return res.render("login", templateVars);
+  });
+
+
 
 //Current homepage. To be fixed I assume
 app.get("/", (req, res) => {
@@ -153,6 +172,13 @@ app.post('/urls/:id/delete', (req, res) => {
 
 //Registers user and saves info to new object in user database
 app.post('/register', (req, res) => {
+  if (!req.body.email || !req.body.password){
+    res.status(400);
+    return res.send('One or more fields is empty. Please enter a valid email and password.')
+  } else if (getUserByEmail(req.body.email)) {
+    res.status(400);
+    return res.send('An account with that email already exists.')
+  }  else {
   const randomID = generateRandomString()
   const user = {
     id: randomID,
@@ -162,4 +188,5 @@ app.post('/register', (req, res) => {
   users[user.id] = user
   res.cookie('user_id', user.id)
   return res.redirect('/urls')
+  }
 });
