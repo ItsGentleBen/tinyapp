@@ -65,6 +65,11 @@ app.listen(PORT, () => {
 //Generates a random string when a url is submitted in /urls/new, saves it to the database
 //then redirects to the page displaying that specific pair of short/long URL
 app.post("/urls", (req, res) => {
+  
+  if (!req.cookies.user_id) {
+    res.status(401);
+    return res.send('Must log in before shortening URL.')
+  }
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
   return res.redirect(`/urls/${shortURL}`);
@@ -144,6 +149,10 @@ app.get("/urls/new", (req, res) => {
     users, 
     user: users[req.cookies.user_id]
   };
+
+  if (!req.cookies.user_id) {
+    return res.redirect('/login');
+  }   
   return res.render("urls_new", templateVars);
 });
 
