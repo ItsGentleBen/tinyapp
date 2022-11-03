@@ -102,7 +102,11 @@ app.get("/register", (req, res) => {
     urls: urlDatabase,
     user: users[req.cookies.user_id]
   };
-  return res.render("register", templateVars);
+
+  if (!req.cookies.user_id) {
+    return res.render("register", templateVars);
+  }
+    return res.redirect('/urls');
   });
 
   //Directs to login page
@@ -111,7 +115,11 @@ app.get("/login", (req, res) => {
     urls: urlDatabase,
     user: users[req.cookies.user_id]
   };
-  return res.render("login", templateVars);
+
+  if (!req.cookies.user_id) {
+    return res.render("login", templateVars);
+  }
+    return res.redirect('/urls');
   });
 
 
