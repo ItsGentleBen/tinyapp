@@ -26,8 +26,8 @@
           <tr>
             <th scope="col">Short URL ID</th>
             <th scope="col">Long URL</th>
-            <th scope="col">Delete</th>
             <th scope="col">Edit</th>
+            <th scope="col">Delete</th>
           </tr>
         </thead>
         <tbody>
@@ -40,13 +40,13 @@
                   <%= urls[id].longURL %>
                 </td>
                   <td>
-                  <form method="POST" action="/urls/<%= id %>/delete">
-                    <button type="submit" style ="background-color: rgb(133, 58, 58)">Delete</button>
+                    <form method="GET" action="/urls/<%= id %>">
+                      <button type="submit" class="btn btn-primary">Edit</button>
                     </form>
                   </td>
                     <td>
-                    <form method="GET" action="/urls/<%= id %>">
-                      <button type="submit" style ="background-color: rgb(222, 238, 10)">Edit</button>
+                    <form method="POST" action="/urls/<%= id %>/delete">
+                      <button type="submit" class="btn btn-primary">Delete</button>
                   </td>
                 </form>
               </td>
