@@ -4,7 +4,7 @@ const morgan = require('morgan')
 const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080;
-
+const {getUserByEmail, } = require('./helpers')
 app.set("view engine", "ejs");
 
 //
@@ -30,14 +30,7 @@ function generateRandomString() {
   return randomString
 }
 
-//function to check is an email is already registered
-const getUserByEmail = (userEmail, users) => {
-  for (let user in users) {
-    if (users[user].email === userEmail) {
-      return users[user];
-    }
-  } return null;
-};
+
 
 //function that return the urls of currently logged in user
 const urlsForUser = (id) => {
@@ -104,7 +97,6 @@ app.post('/login', (req, res) => {
 
 //Logs out current user
 app.post('/logout', (req, res) => {
-  // req.session = null
   req.session.user_id = null
   return res.redirect('/login');
   });
