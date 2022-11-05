@@ -87,6 +87,10 @@ app.get("/urls/:id", (req, res) => {
     users,
     user: users[req.session.user_id],
   };
+  if (!urlDatabase[id]) {
+    res.status(404);
+    return res.send('This page does not exist');
+  }
   if (!req.session.user_id) {
     res.status(401);
     return res.send('You must be logged in to view');
