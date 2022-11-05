@@ -198,14 +198,10 @@ app.get("/register", (req, res) => {
 
 //logs in user when submitted
 app.post('/login', (req, res) => {
-  const loginEmail = req.body.email;
-  const loginPassword = req.body.password;
+  const {email, password} = req.body;
+  const user = getUserByEmail(email, users);
 
-  const user = getUserByEmail(loginEmail, users);
-
-  const passwordCheck = bcrypt.compareSync(loginPassword, users[user].password);
-
-  if (!user || !passwordCheck) {
+  if (!user || !bcrypt.compareSync(password, users[user].password)) {
     res.status(403);
     return res.send('Email or Password is incorrect.');
   }
